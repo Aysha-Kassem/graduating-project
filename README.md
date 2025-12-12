@@ -198,7 +198,7 @@ pip install -r requirements.txt
 - ESP32 firmware  
 - IMU integration  
 - BLE/WiFi real streaming  
-- Mobile app (Flutter / React Native)
+- Mobile app ( React Native)
 
 ---
 
