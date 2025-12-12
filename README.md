@@ -203,9 +203,13 @@ pip install -r requirements.txt
 ---
 
 # 👥 Contributors
-- Aysha Kassem  
-- Team Members  
-- Supervisor
+- Aysha Kassem 
+- Nada Etman 
+- Ali Tamer
+- Abdelrahman Mostafa
+- Mohamed Kamal
+
+- Supervisor: Assoc. Prof. Dr. Wessam M.Salama
 
 ---
 
