@@ -1,62 +1,45 @@
-import numpy as np
+import time
 import tensorflow as tf
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import f1_score
 from train_all import prepare_common_data
 
-def print_metrics(y_true, y_pred, title):
-    y_pred_label = (y_pred > 0.5).astype(int)
+MODELS = {
+    "LSTM": "../models/FINAL_LSTM_Attention.keras",
+    "BiGRU": "../models/FINAL_BiGRU_Attention.keras",
+    "Hybrid": "../models/FINAL_BiGRU_Attention_LSTM.keras",
+}
 
-    acc = accuracy_score(y_true, y_pred_label)
-    prec = precision_score(y_true, y_pred_label, zero_division=0)
-    rec = recall_score(y_true, y_pred_label, zero_division=0)
-    f1 = f1_score(y_true, y_pred_label, zero_division=0)
-    cm = confusion_matrix(y_true, y_pred_label)
+print("Loading test data...")
+_, X_test, _, y_test_now, _, _ = prepare_common_data()
 
-    print(f"\n=== Metrics for {title} ===")
-    print(f"Accuracy : {acc:.4f}")
-    print(f"Precision: {prec:.4f}")
-    print(f"Recall   : {rec:.4f}")
-    print(f"F1-Score : {f1:.4f}")
-    print("Confusion Matrix:")
-    print(cm)
+scores = {}
 
-    return acc, prec, rec, f1
+for name, path in MODELS.items():
+    model = tf.keras.models.load_model(path, compile=False)
 
+    start = time.time()
+    preds_now, _ = model.predict(X_test, verbose=0)
+    end = time.time()
 
-# ===============================
-# Load data
-# ===============================
-X_train, X_test, y_train_now, y_test_now, y_train_soon, y_test_soon = prepare_common_data()
+    preds_bin = (preds_now > 0.5).astype(int)
+    f1 = f1_score(y_test_now, preds_bin)
 
-# ===============================
-# Load best models
-# ===============================
-print("Loading models...")
-model1 = tf.keras.models.load_model("../models/FINAL_LSTM_Attention.keras", compile=False)
-model2 = tf.keras.models.load_model("../models/FINAL_BiGRU_Attention.keras", compile=False)
-model3 = tf.keras.models.load_model("../models/FINAL_BiGRU_Attention_LSTM.keras", compile=False)
+    time_per_sample = (end - start) / len(X_test)
 
-# ===============================
-# Predict using all models
-# ===============================
-p1_now, p1_soon = model1.predict(X_test)
-p2_now, p2_soon = model2.predict(X_test)
-p3_now, p3_soon = model3.predict(X_test)
+    scores[name] = {
+        "model": model,
+        "f1": f1,
+        "time": time_per_sample
+    }
 
-# ===============================
-# Weighted Ensemble
-# ===============================
-weights = {"m1": 0.5, "m2": 0.2, "m3": 0.3}
+best_name = min(scores.items(), key=lambda x: (1 - x[1]["f1"], x[1]["time"]))[0]
+best_model = scores[best_name]["model"]
 
-ensemble_now = (p1_now * weights["m1"]) + (p2_now * weights["m2"]) + (p3_now * weights["m3"])
-ensemble_soon = (p1_soon * weights["m1"]) + (p2_soon * weights["m2"]) + (p3_soon * weights["m3"])
-
-# ===============================
-# Evaluate ensemble
-# ===============================
-print("\n\n==============================")
-print("Evaluating WEIGHTED ENSEMBLE (best system)")
+print("\n==============================")
+print(f"🏆 SELECTED MODEL: {best_name}")
+print(f"F1 Score        : {scores[best_name]['f1']:.4f}")
+print(f"Inference Time  : {scores[best_name]['time']*1000:.2f} ms")
 print("==============================")
 
-print_metrics(y_test_now, ensemble_now, "Weighted Ensemble — Fall Now")
-print_metrics(y_test_soon, ensemble_soon, "Weighted Ensemble — Fall Soon")
+p_now, p_soon = best_model.predict(X_test)
+print("Prediction completed using best model only.")

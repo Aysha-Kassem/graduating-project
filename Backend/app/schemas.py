@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import List
 
 # -------------------- USERS --------------------
 class UserBase(BaseModel):
@@ -69,6 +70,8 @@ class Prediction(PredictionBase):
     class Config:
         from_attributes = True
 
-# -------------------- SENSOR DATA --------------------
-class SensorDataBase(BaseModel):
-    data: list  # مصفوفة [samples, timesteps, features]
+# -------------------- PREDICT ROUTER --------------------
+class SensorData(BaseModel):
+    data: List[List[List[float]]]  # shape: [samples, timesteps, 6]
+    user_id: int
+    motion_batch_id: int

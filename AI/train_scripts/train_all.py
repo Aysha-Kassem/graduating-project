@@ -11,9 +11,16 @@ import joblib
 # ==============================
 # 1) DATA PREPROCESSING
 # ==============================
-def prepare_common_data(filepath='../dataset/DataSet.csv', time_steps=50, test_size=0.2, step_size=2):
+def prepare_common_data(filepath=None, time_steps=50, test_size=0.2, step_size=2):
+    import os
+
+    if filepath is None:
+        # AI/train_scripts/train_all.py → AI/
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        filepath = os.path.join(base_dir, "dataset", "DataSet.csv")
+
     df = pd.read_csv(filepath, low_memory=False)
-    
+
     # Extract wrist sensor data
     df['WristAccelerometer_x'] = pd.to_numeric(df['WristAccelerometer'], errors='coerce')
     df['WristAccelerometer_y'] = pd.to_numeric(df['Unnamed: 30'], errors='coerce')
